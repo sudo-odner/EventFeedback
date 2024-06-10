@@ -15,7 +15,8 @@ type Config struct {
 }
 
 type HTTPServer struct {
-	Address     string        `yaml:"address" env-default:"lox"`
+	Host        string        `yaml:"host" env-default:"localhost"`
+	Port        string        `yaml:"port" env-default:"8080"`
 	Timeout     time.Duration `yaml:"timout" env-default:"5s"`
 	TdleTimeout time.Duration `yaml:"tdle_timeout" env-default:"60s"`
 }
@@ -34,7 +35,6 @@ func MustLoad() *Config {
 	}
 
 	// Провека на существования файла
-
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		log.Fatalf("config file does not exist: %s", configPath)
 	}
