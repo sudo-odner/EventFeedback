@@ -1,8 +1,7 @@
 package serverHttp
 
 import (
-	"log"
-	"modEventFeedback/internal/controler/serverHttp"
+	"fmt"
 	"net/http"
 )
 
@@ -13,28 +12,26 @@ type Server struct {
 }
 
 func loadRouters(router *http.ServeMux) {
-	h := handler.New()
-
-	router.HandleFunc("Get /", h.Get)
+	h := NewHandler()
+	router.HandleFunc("GET /", h.Get)
 }
 
-func New(host, post string) *Server {
+func NewServer(host, port string) *Server {
 	router := http.NewServeMux()
 	loadRouters(router)
 
 	server := http.Server{
-		Addr:    ":8080",
-		Handler: nil,
+		Addr:    host + ":" + port,
+		Handler: router,
 	}
-
 	return &Server{
 		server: server,
 		host:   host,
-		port:   post,
+		port:   port,
 	}
 }
 
 func Start(s *Server) {
-	log.Fatalf("Server started. Lissening on port %s", s.port)
+	fmt.Println("Server started. Lissening on port %s", s.port)
 	s.server.ListenAndServe()
 }

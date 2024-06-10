@@ -28,7 +28,9 @@ func main() {
 	// TODO: init storage: mongoDB
 
 	// TODO: init server: net/http
-	server := serverHttp.New(cfg.HTTPServer.Host, cfg.HTTPServer.Port)
+
+	// Init server on protocol HTTP
+	server := serverHttp.NewServer(cfg.HTTPServer.Host, cfg.HTTPServer.Port)
 	serverHttp.Start(server)
 
 	// TODO: init router:
