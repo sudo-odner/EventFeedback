@@ -29,7 +29,6 @@ func MustLoad() *Config {
 	}
 
 	configPath, exists := os.LookupEnv("CONFIG_PATH")
-
 	if !exists {
 		log.Fatal("CONFIG_PATH is not found")
 	}

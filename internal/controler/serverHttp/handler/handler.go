@@ -1,4 +1,4 @@
-package serverHttp
+package handler
 
 import (
 	"fmt"
@@ -7,8 +7,11 @@ import (
 
 type Handler struct{}
 
-func NewHandler() *Handler {
-	return &Handler{}
+func New(r *http.ServeMux) *Handler {
+	newHandler := Handler{}
+	r.HandleFunc("GET /", newHandler.Get)
+
+	return &newHandler
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
