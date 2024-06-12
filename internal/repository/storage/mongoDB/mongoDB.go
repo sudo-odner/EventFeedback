@@ -49,7 +49,7 @@ func (db *MongoDB) Ping() {
 	return
 }
 
-func (db *MongoDB) CreateDataBaseFeedback() {
+func (db *MongoDB) CreateDatabaseFeedback() {
 	client, err := mongo.Connect(context.TODO(), db.clientOpts)
 	defer db.closeConnection(client)
 	if err != nil {
@@ -72,6 +72,9 @@ func (db *MongoDB) CreateDataBaseFeedback() {
 		}
 	}
 }
+
+// TODO: Method drop database
+// TODO: Расписать нужные методы
 
 // Скорее всего каждый раз нужно их в методах использовать
 // TODO: Create session to DB (Connect)
