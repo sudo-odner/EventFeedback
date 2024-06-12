@@ -1,21 +1,31 @@
 package handler
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
 )
 
-type Handler struct{}
+type Handler struct {
+	log *slog.Logger
+}
 
-func New(r *http.ServeMux) *Handler {
-	newHandler := Handler{}
-	r.HandleFunc("GET /", newHandler.Get)
+func New(log *slog.Logger) *http.ServeMux {
+	newHandler := Handler{
+		log: log,
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /", newHandler.Get)
+	mux.HandleFunc("GET /v1.0/health", newHandler.Health)
+	mux.HandleFunc("GET /v1.0/some", newHandler.Health)
 
-	return &newHandler
+	return mux
+}
+
+func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("work handler")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Hello, world!"))
+	w.Write([]byte("Hello"))
 }

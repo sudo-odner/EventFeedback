@@ -14,8 +14,7 @@ type Server struct {
 }
 
 func NewServer(cfg *config.HTTPServer, log *slog.Logger) *Server {
-	router := http.NewServeMux()
-	handler.New(router)
+	router := handler.New(log)
 
 	server := http.Server{
 		Addr:    cfg.Host + ":" + cfg.Port,
