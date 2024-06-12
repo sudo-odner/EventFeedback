@@ -2,10 +2,13 @@ package mongoDB
 
 import (
 	"context"
+	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log/slog"
 	"modEventFeedback/internal/config"
+	"slices"
 )
 
 type MongoDB struct {
@@ -44,6 +47,30 @@ func (db *MongoDB) Ping() {
 		return
 	}
 	return
+}
+
+func (db *MongoDB) CreateDataBaseFeedback() {
+	client, err := mongo.Connect(context.TODO(), db.clientOpts)
+	defer db.closeConnection(client)
+	if err != nil {
+		db.log.Error("Connection with MongoDB is not created", err)
+	}
+	if result, err := client.ListDatabaseNames(context.TODO(), bson.M{}); err != nil {
+		fmt.Println(result)
+		if !slices.Contains(result, "feedback") {
+			table := client.Database("feedback")
+			collection := []string{"course", "lecture", "question", "answerQuestion"}
+			for _, item := range collection {
+				if err := table.CreateCollection(context.TODO(), item); err != nil {
+					msg := fmt.Sprintf("Creating collection %s has error:", item)
+					db.log.Error(msg, err)
+				}
+			}
+			db.log.Info("DataBase feedback and collection [course,lecture,question,answerQuestion] created")
+		} else {
+			db.log.Info("DataBase feedback has already been created")
+		}
+	}
 }
 
 // Скорее всего каждый раз нужно их в методах использовать
