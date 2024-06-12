@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
 	"log"
@@ -12,6 +13,7 @@ type Config struct {
 	Env         string     `yaml:"env" env-default:"local"` // Прочитаь про struct tag
 	StoragePath string     `yaml:"storage_path" rnv-required:"true"`
 	HTTPServer  HTTPServer `yaml:"http_server"`
+	DB          DB         `yaml:"db"`
 }
 
 type HTTPServer struct {
@@ -21,27 +23,39 @@ type HTTPServer struct {
 	TdleTimeout time.Duration `yaml:"tdle_timeout" env-default:"60s"`
 }
 
-func MustLoad() *Config {
+type DB struct {
+	MongoDB MongoDB `yaml:"mongo_db"`
+}
+
+type MongoDB struct {
+	Uri string `yaml:"uri"`
+}
+
+func MustLoad() (*Config, error) {
 
 	// Провекрка существования .env
 	if err := godotenv.Load(); err != nil {
 		log.Print(".env file found")
+		return nil, err
 	}
 
 	configPath, exists := os.LookupEnv("CONFIG_PATH")
 	if !exists {
 		log.Fatal("CONFIG_PATH is not found")
+		return nil, errors.New("CONFIG_PATH is not found")
 	}
 
 	// Провека на существования файла
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		log.Fatalf("config file does not exist: %s", configPath)
+		return nil, err
 	}
 
 	var cfg Config
 	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
 		log.Fatalf("cannot read config: %s", err)
+		return nil, err
 	}
 
-	return &cfg
+	return &cfg, nil
 }

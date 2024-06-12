@@ -6,3 +6,7 @@ http_server:
   port: "8081"
   timeout: 4s
   iddle_timout: 60s
+
+db:
+  mongo_db:
+    uri: "s"

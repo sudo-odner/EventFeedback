@@ -1,54 +1,27 @@
 package main
 
 import (
-	"log/slog"
 	"modEventFeedback/internal/config"
 	"modEventFeedback/internal/controler/serverHttp"
-	"os"
+	"modEventFeedback/internal/logger"
 )
 
 func main() {
 	// Иницилизация конфига при помощи пакета cleanenv
-	cfg := config.MustLoad()
+	cfg, err := config.MustLoad()
+	if err != nil {
+		return
+	}
 
 	// Иницилизация логера при помощи встроенного пакета slog
-	log := setupLogger(cfg.Env)
-	log.Info("starting url-shortener", slog.String("env", cfg.Env))
-	log.Debug("debug massages are enable")
+	log := logger.New(cfg.Env)
 
-	// TODO: init storage: mongoDB
+	// Иницилизация mongoDB
+	// db := mongoDB.New(&cfg.DB.MongoDB, log.Slog)
 
 	// TODO: init server: net/http
 
 	// Иницилизация сервера, на основе HTTP протокола, и его ручек при помощи встроеного пакета http
-	server := serverHttp.NewServer(cfg.HTTPServer.Host, cfg.HTTPServer.Port)
-	serverHttp.Start(log, server)
-}
-
-const (
-	envLocal = "local"
-	envDev   = "dev"
-	envProd  = "prod"
-)
-
-func setupLogger(env string) *slog.Logger {
-	var log *slog.Logger
-
-	switch env {
-	case envLocal:
-		log = slog.New(
-			slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
-	case envDev:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
-	case envProd:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
-		)
-	}
-
-	return log
-
+	server := serverHttp.NewServer(&cfg.HTTPServer, log.Slog)
+	server.Start()
 }

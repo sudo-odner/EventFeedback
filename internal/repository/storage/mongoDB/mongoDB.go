@@ -4,43 +4,46 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
-	"time"
+	"log/slog"
+	"modEventFeedback/internal/config"
 )
 
 type MongoDB struct {
+	log        *slog.Logger
+	cfg        *config.MongoDB
 	clientOpts *options.ClientOptions
 }
 
-func New(uri string) *MongoDB {
-	clientOptions := options.Client().ApplyURI(uri)
+// New Создание нового объекта подключения к MongoDB
+func New(cfg *config.MongoDB, log *slog.Logger) *MongoDB {
+	clientOptions := options.Client().ApplyURI(cfg.Uri)
 	// Добавить проверку что он существует и происходить подключение
 	return &MongoDB{
+		log:        log,
+		cfg:        cfg,
 		clientOpts: clientOptions,
 	}
 }
 
-func disconnect(client *mongo.Client, err error) {
-	if err = client.Disconnect(context.TODO()); err != nil {
-		log.Fatal(err) // Описать
+func (db *MongoDB) closeConnection(client *mongo.Client) {
+	if err := client.Disconnect(context.TODO()); err != nil {
+		db.log.Error("Error with disconnect client", err)
 	}
 }
 
-func Ping(db *MongoDB) (err error) {
+func (db *MongoDB) Ping() {
 	client, err := mongo.Connect(context.TODO(), db.clientOpts)
+	defer db.closeConnection(client)
 	if err != nil {
-		return err
+		db.log.Error("Connection with MongoDB is not created", err)
+		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	defer client.Disconnect(ctx)
 
-	if client, err := mongo.Connect(context.TODO(), db.clientOpts); err == nil {
-		if err = client.Ping(context.TODO(), nil); err == nil {
-			return nil
-		}
+	if err := client.Ping(context.TODO(), nil); err != nil {
+		db.log.Error("Ping is not work", err)
+		return
 	}
-	return err
+	return
 }
 
 // Скорее всего каждый раз нужно их в методах использовать

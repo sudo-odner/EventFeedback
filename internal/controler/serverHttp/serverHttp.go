@@ -2,33 +2,34 @@ package serverHttp
 
 import (
 	"log/slog"
+	"modEventFeedback/internal/config"
 	"modEventFeedback/internal/controler/serverHttp/handler"
 	"net/http"
 )
 
 type Server struct {
-	server http.Server
-	host   string
-	port   string
+	server *http.Server
+	cfg    *config.HTTPServer
+	log    *slog.Logger
 }
 
-func NewServer(host, port string) *Server {
+func NewServer(cfg *config.HTTPServer, log *slog.Logger) *Server {
 	router := http.NewServeMux()
 	handler.New(router)
 
 	server := http.Server{
-		Addr:    host + ":" + port,
+		Addr:    cfg.Host + ":" + cfg.Port,
 		Handler: router,
 	}
 	return &Server{
-		server: server,
-		host:   host,
-		port:   port,
+		server: &server,
+		cfg:    cfg,
+		log:    log,
 	}
 }
 
-func Start(log *slog.Logger, s *Server) {
-	log.Info("Server started. Lissening on host " + s.host + " port " + s.port)
+func (s *Server) Start() {
+	s.log.Info("Server started. Lissening on host " + s.cfg.Host + " port " + s.cfg.Port)
 
 	s.server.ListenAndServe()
 }
