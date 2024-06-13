@@ -55,20 +55,38 @@ func (db *MongoDB) CreateDatabaseFeedback() {
 	if err != nil {
 		db.log.Error("Connection with MongoDB is not created", err)
 	}
-	if result, err := client.ListDatabaseNames(context.TODO(), bson.M{}); err != nil {
+	nameTable := "feedback"
+	nameCollection := []string{"course", "lecture", "question", "answerQuestion"}
+
+	if result, err := client.ListDatabaseNames(context.TODO(), bson.D{{"name", nameTable}}); err != nil {
 		fmt.Println(result)
-		if !slices.Contains(result, "feedback") {
-			table := client.Database("feedback")
-			collection := []string{"course", "lecture", "question", "answerQuestion"}
-			for _, item := range collection {
+		if len(result) == 0 {
+			table := client.Database(nameTable)
+			for _, item := range nameCollection {
 				if err := table.CreateCollection(context.TODO(), item); err != nil {
 					msg := fmt.Sprintf("Creating collection %s has error:", item)
 					db.log.Error(msg, err)
 				}
 			}
-			db.log.Info("DataBase feedback and collection [course,lecture,question,answerQuestion] created")
+			db.log.Info("[New DataBase] DataBase feedback and collection [course,lecture,question,answerQuestion] created")
 		} else {
-			db.log.Info("DataBase feedback has already been created")
+			db.log.Info("DataBase is already created. Check collection")
+			table := client.Database(nameTable)
+			resul, _ := table.ListCollectionNames(context.TODO(), bson.D{})
+			for _, item := range resul {
+				if slices.Contains(nameCollection, item) {
+					msg := fmt.Sprintf("Collection %s is alrady created", item)
+					db.log.Info(msg)
+				} else {
+					if err := table.CreateCollection(context.TODO(), item); err != nil {
+						msg := fmt.Sprintf("Creating collection %s has error:", item)
+						db.log.Error(msg, err)
+					}
+					msg := fmt.Sprintf("Collection %s is created", item)
+					db.log.Info(msg)
+				}
+				db.log.Info("[Collection] DataBase feedback and collection [course,lecture,question,answerQuestion] created")
+			}
 		}
 	}
 }
