@@ -2,28 +2,24 @@ package mongoDB
 
 import (
 	"context"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"modEventFeedback/internal/repository/storage"
-	"slices"
 )
 
 // Еhe "Find" tool for searching by filter, *option and automatically writing to the structure type
 // [storage.Course, storage.Lecture, storage.Question storage.AnswerQuestion]
 // TODO: Edit log answer on err
-// TODO: ПОдумать на счет уменьшения кода *findOne и *findAll
 // TODO: Добавить фильтрацию по option
 
-// findAll tool for findAll element in collection by filter and *option
-func (db *MongoDB) findAll(tableName, collectionName string, filter bson.D) []bson.M {
-	// Check correct collection and table name
-	if tableName != tableDB {
-		return []bson.M{bson.M{}}
+// findAll tool for find all element in collection by filter and *option
+func (db *MongoDB) findAll(table, collection string, filter bson.D) []bson.M {
+	// Check correct name collection and table
+	if err := accessConnectToTableAndCollection(table, collection); err != nil {
+		db.log.Error("access is close, err:", err)
+		return []bson.M{}
 	}
-	if !slices.Contains(collectionDB, collectionName) {
-		return []bson.M{bson.M{}}
-	}
+
 	// Connect to mongoDB
 	client, err := mongo.Connect(context.TODO(), db.clientOpts)
 	defer db.closeConnection(client)
@@ -31,15 +27,17 @@ func (db *MongoDB) findAll(tableName, collectionName string, filter bson.D) []bs
 		db.log.Error("Connection with MongoDB is not created", err)
 	}
 
+	// Create connect to collection
+	c := client.Database(table).Collection(collection)
+
 	// Create cursor in collection
-	collection := client.Database(tableName).Collection(collectionName)
-	cursor, err := collection.Find(context.TODO(), filter)
+	cursor, err := c.Find(context.TODO(), filter)
 	if err != nil {
 		db.log.Error("[mongoDB][FindAll] Cursor not created")
 	}
 	defer db.closeCursor(cursor)
 
-	// Write result in bson.M
+	// Write result in []bson.M
 	var result []bson.M
 
 	if err = cursor.All(context.TODO(), &result); err != nil {
@@ -51,7 +49,8 @@ func (db *MongoDB) findAll(tableName, collectionName string, filter bson.D) []bs
 
 // FindAllCourse The Tool find all course by filter, *option
 func (db *MongoDB) FindAllCourse(filter bson.D) []storage.Course {
-	resultBson := db.findAll(tableDB, "course", filter)
+	tableName, collectionName := tableDB, "course"
+	resultBson := db.findAll(tableName, collectionName, filter)
 
 	dataCourse := make([]storage.Course, 0, len(resultBson))
 	for _, result := range resultBson {
@@ -61,14 +60,14 @@ func (db *MongoDB) FindAllCourse(filter bson.D) []storage.Course {
 			db.log.Error("Can't read result")
 		}
 		dataCourse = append(dataCourse, course)
-		fmt.Println(course)
 	}
 	return dataCourse
 }
 
 // FindAllLecture The Tool find all lecture by filter, *option
 func (db *MongoDB) FindAllLecture(filter bson.D) []storage.Lecture {
-	resultBson := db.findAll(tableDB, "lecture", filter)
+	tableName, collectionName := tableDB, "lecture"
+	resultBson := db.findAll(tableName, collectionName, filter)
 
 	dataLecture := make([]storage.Lecture, 0, len(resultBson))
 	for _, result := range resultBson {
@@ -78,14 +77,14 @@ func (db *MongoDB) FindAllLecture(filter bson.D) []storage.Lecture {
 			db.log.Error("Can't read result")
 		}
 		dataLecture = append(dataLecture, lecture)
-		fmt.Println(lecture)
 	}
 	return dataLecture
 }
 
 // FindAllQuestion The Tool find all course by question, *option
 func (db *MongoDB) FindAllQuestion(filter bson.D) []storage.Question {
-	resultBson := db.findAll(tableDB, "lecture", filter)
+	tableName, collectionName := tableDB, "question"
+	resultBson := db.findAll(tableName, collectionName, filter)
 
 	dataQuestion := make([]storage.Question, 0, len(resultBson))
 	for _, result := range resultBson {
@@ -95,14 +94,14 @@ func (db *MongoDB) FindAllQuestion(filter bson.D) []storage.Question {
 			db.log.Error("Can't read result")
 		}
 		dataQuestion = append(dataQuestion, question)
-		fmt.Println(question)
 	}
 	return dataQuestion
 }
 
 // FindAllAnswerQuestion The Tool find all answer on question by filter, *option
 func (db *MongoDB) FindAllAnswerQuestion(filter bson.D) []storage.AnswerQuestion {
-	resultBson := db.findAll(tableDB, "lecture", filter)
+	tableName, collectionName := tableDB, "answerQuestion"
+	resultBson := db.findAll(tableName, collectionName, filter)
 
 	dataAnswerQuestion := make([]storage.AnswerQuestion, 0, len(resultBson))
 	for _, result := range resultBson {
@@ -112,20 +111,16 @@ func (db *MongoDB) FindAllAnswerQuestion(filter bson.D) []storage.AnswerQuestion
 			db.log.Error("Can't read result")
 		}
 		dataAnswerQuestion = append(dataAnswerQuestion, answerQuestion)
-		fmt.Println(answerQuestion)
 	}
 	return dataAnswerQuestion
 }
 
-/* Дописать. Посмотреть как передовать и возвращять разные структуры
-func (db *MongoDB) findOne(filter bson.D, tableName, collectionName string, struc interface{}) interface{}{
-	var answerQuestion storage.AnswerQuestion
-	// Check correct collection and table name
-	if tableName != tableDB {
-		return []bson.M{bson.M{}}
-	}
-	if !slices.Contains(collectionDB, collectionName) {
-		return []bson.M{bson.M{}}
+// findOne tool for find one element in collection by filter and *option
+func (db *MongoDB) findOne(table, collection string, filter bson.D) bson.M {
+	// Check correct name collection and table
+	if err := accessConnectToTableAndCollection(table, collection); err != nil {
+		db.log.Error("access is close, err:", err)
+		return bson.M{}
 	}
 
 	// Connect to mongoDB
@@ -133,104 +128,73 @@ func (db *MongoDB) findOne(filter bson.D, tableName, collectionName string, stru
 	defer db.closeConnection(client)
 	if err != nil {
 		db.log.Error("Connection with MongoDB is not created", err)
+		return bson.M{}
 	}
 
-	collection := client.Database(tableName).Collection(collectionName)
-	if err := collection.FindOne(context.TODO(), filter).Decode(&answerQuestion); err != nil {
+	// Create connect to collection
+	c := client.Database(table).Collection(collection)
+
+	// Write result in bson.M
+	var result bson.M
+
+	if err := c.FindOne(context.TODO(), filter).Decode(&result); err != nil {
 		db.log.Error("Error with find one element in answerQuestion collection:", err)
 	}
-	return answerQuestion
+	return result
 }
-*/
 
 // FindOneAnswerQuestion The Tool find one answer on question by filter, *option
 func (db *MongoDB) FindOneAnswerQuestion(filter bson.D) storage.AnswerQuestion {
-	tableName, collectionName := tableDB, "answerQuestion"
+	table, collection := tableDB, "answerQuestion"
 	var answerQuestion storage.AnswerQuestion
 
-	// Check correct collection and table name
-	if !slices.Contains(collectionDB, collectionName) {
-		return answerQuestion
-	}
-	// Connect to mongoDB
-	client, err := mongo.Connect(context.TODO(), db.clientOpts)
-	defer db.closeConnection(client)
-	if err != nil {
-		db.log.Error("Connection with MongoDB is not created", err)
+	resultBson := db.findAll(table, collection, filter)
+	bsonBytes, _ := bson.Marshal(resultBson)
+	if err := bson.Unmarshal(bsonBytes, &answerQuestion); err != nil {
+		db.log.Error("Can't read result")
 	}
 
-	collection := client.Database(tableName).Collection(collectionName)
-	if err := collection.FindOne(context.TODO(), filter).Decode(&answerQuestion); err != nil {
-		db.log.Error("Error with find one element in answerQuestion collection:", err)
-	}
 	return answerQuestion
 }
 
 // FindOneLecture The Tool find one answer on question by filter, *option
 func (db *MongoDB) FindOneLecture(filter bson.D) storage.Lecture {
-	tableName, collectionName := tableDB, "lecture"
+	table, collection := tableDB, "lecture"
 	var lecture storage.Lecture
 
-	// Check correct collection and table name
-	if !slices.Contains(collectionDB, collectionName) {
-		return lecture
-	}
-	// Connect to mongoDB
-	client, err := mongo.Connect(context.TODO(), db.clientOpts)
-	defer db.closeConnection(client)
-	if err != nil {
-		db.log.Error("Connection with MongoDB is not created", err)
+	resultBson := db.findAll(table, collection, filter)
+	bsonBytes, _ := bson.Marshal(resultBson)
+	if err := bson.Unmarshal(bsonBytes, &lecture); err != nil {
+		db.log.Error("Can't read result")
 	}
 
-	collection := client.Database(tableName).Collection(collectionName)
-	if err := collection.FindOne(context.TODO(), filter).Decode(&lecture); err != nil {
-		db.log.Error("Error with find one element in answerQuestion collection:", err)
-	}
 	return lecture
 }
 
 // FindOneQuestion The Tool find one answer on question by filter, *option
 func (db *MongoDB) FindOneQuestion(filter bson.D) storage.Question {
-	tableName, collectionName := tableDB, "question"
+	table, collection := tableDB, "question"
 	var question storage.Question
 
-	// Check correct collection and table name
-	if !slices.Contains(collectionDB, collectionName) {
-		return question
-	}
-	// Connect to mongoDB
-	client, err := mongo.Connect(context.TODO(), db.clientOpts)
-	defer db.closeConnection(client)
-	if err != nil {
-		db.log.Error("Connection with MongoDB is not created", err)
+	resultBson := db.findAll(table, collection, filter)
+	bsonBytes, _ := bson.Marshal(resultBson)
+	if err := bson.Unmarshal(bsonBytes, &question); err != nil {
+		db.log.Error("Can't read result")
 	}
 
-	collection := client.Database(tableName).Collection(collectionName)
-	if err := collection.FindOne(context.TODO(), filter).Decode(&question); err != nil {
-		db.log.Error("Error with find one element in answerQuestion collection:", err)
-	}
 	return question
 }
 
 // FindOneCourse The Tool find one answer on question by filter, *option
 func (db *MongoDB) FindOneCourse(filter bson.D) storage.Course {
-	tableName, collectionName := tableDB, "course"
+	table, collection := tableDB, "course"
 	var course storage.Course
 
-	// Check correct collection and table name
-	if !slices.Contains(collectionDB, collectionName) {
-		return course
-	}
-	// Connect to mongoDB
-	client, err := mongo.Connect(context.TODO(), db.clientOpts)
-	defer db.closeConnection(client)
-	if err != nil {
-		db.log.Error("Connection with MongoDB is not created", err)
+	resultBson := db.findAll(table, collection, filter)
+	bsonBytes, _ := bson.Marshal(resultBson)
+	if err := bson.Unmarshal(bsonBytes, &course); err != nil {
+		db.log.Error("Can't read result")
 	}
 
-	collection := client.Database(tableName).Collection(collectionName)
-	if err := collection.FindOne(context.TODO(), filter).Decode(&course); err != nil {
-		db.log.Error("Error with find one element in answerQuestion collection:", err)
-	}
 	return course
 }

@@ -2,6 +2,7 @@ package mongoDB
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -10,6 +11,16 @@ import (
 	"modEventFeedback/internal/config"
 	"slices"
 )
+
+func accessConnectToTableAndCollection(table, collection string) error {
+	if table != tableDB {
+		return errors.New(fmt.Sprintf("table %s is not exist", table))
+	}
+	if !slices.Contains(collectionDB, collection) {
+		return errors.New(fmt.Sprintf("collection %s is not exist", collection))
+	}
+	return nil
+}
 
 var (
 	tableDB      = "feedback"
