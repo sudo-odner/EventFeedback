@@ -11,7 +11,9 @@ import (
 
 // Еhe "Find" tool for searching by filter, *option and automatically writing to the structure type
 // [storage.Course, storage.Lecture, storage.Question storage.AnswerQuestion]
-// TODO: Write for find one element
+// TODO: Edit log answer on err
+// TODO: ПОдумать на счет уменьшения кода *findOne и *findAll
+// TODO: Добавить фильтрацию по option
 
 // findAll tool for findAll element in collection by filter and *option
 func (db *MongoDB) findAll(tableName, collectionName string, filter bson.D) []bson.M {
@@ -113,4 +115,122 @@ func (db *MongoDB) FindAllAnswerQuestion(filter bson.D) []storage.AnswerQuestion
 		fmt.Println(answerQuestion)
 	}
 	return dataAnswerQuestion
+}
+
+/* Дописать. Посмотреть как передовать и возвращять разные структуры
+func (db *MongoDB) findOne(filter bson.D, tableName, collectionName string, struc interface{}) interface{}{
+	var answerQuestion storage.AnswerQuestion
+	// Check correct collection and table name
+	if tableName != tableDB {
+		return []bson.M{bson.M{}}
+	}
+	if !slices.Contains(collectionDB, collectionName) {
+		return []bson.M{bson.M{}}
+	}
+
+	// Connect to mongoDB
+	client, err := mongo.Connect(context.TODO(), db.clientOpts)
+	defer db.closeConnection(client)
+	if err != nil {
+		db.log.Error("Connection with MongoDB is not created", err)
+	}
+
+	collection := client.Database(tableName).Collection(collectionName)
+	if err := collection.FindOne(context.TODO(), filter).Decode(&answerQuestion); err != nil {
+		db.log.Error("Error with find one element in answerQuestion collection:", err)
+	}
+	return answerQuestion
+}
+*/
+
+// FindOneAnswerQuestion The Tool find one answer on question by filter, *option
+func (db *MongoDB) FindOneAnswerQuestion(filter bson.D) storage.AnswerQuestion {
+	tableName, collectionName := tableDB, "answerQuestion"
+	var answerQuestion storage.AnswerQuestion
+
+	// Check correct collection and table name
+	if !slices.Contains(collectionDB, collectionName) {
+		return answerQuestion
+	}
+	// Connect to mongoDB
+	client, err := mongo.Connect(context.TODO(), db.clientOpts)
+	defer db.closeConnection(client)
+	if err != nil {
+		db.log.Error("Connection with MongoDB is not created", err)
+	}
+
+	collection := client.Database(tableName).Collection(collectionName)
+	if err := collection.FindOne(context.TODO(), filter).Decode(&answerQuestion); err != nil {
+		db.log.Error("Error with find one element in answerQuestion collection:", err)
+	}
+	return answerQuestion
+}
+
+// FindOneLecture The Tool find one answer on question by filter, *option
+func (db *MongoDB) FindOneLecture(filter bson.D) storage.Lecture {
+	tableName, collectionName := tableDB, "lecture"
+	var lecture storage.Lecture
+
+	// Check correct collection and table name
+	if !slices.Contains(collectionDB, collectionName) {
+		return lecture
+	}
+	// Connect to mongoDB
+	client, err := mongo.Connect(context.TODO(), db.clientOpts)
+	defer db.closeConnection(client)
+	if err != nil {
+		db.log.Error("Connection with MongoDB is not created", err)
+	}
+
+	collection := client.Database(tableName).Collection(collectionName)
+	if err := collection.FindOne(context.TODO(), filter).Decode(&lecture); err != nil {
+		db.log.Error("Error with find one element in answerQuestion collection:", err)
+	}
+	return lecture
+}
+
+// FindOneQuestion The Tool find one answer on question by filter, *option
+func (db *MongoDB) FindOneQuestion(filter bson.D) storage.Question {
+	tableName, collectionName := tableDB, "question"
+	var question storage.Question
+
+	// Check correct collection and table name
+	if !slices.Contains(collectionDB, collectionName) {
+		return question
+	}
+	// Connect to mongoDB
+	client, err := mongo.Connect(context.TODO(), db.clientOpts)
+	defer db.closeConnection(client)
+	if err != nil {
+		db.log.Error("Connection with MongoDB is not created", err)
+	}
+
+	collection := client.Database(tableName).Collection(collectionName)
+	if err := collection.FindOne(context.TODO(), filter).Decode(&question); err != nil {
+		db.log.Error("Error with find one element in answerQuestion collection:", err)
+	}
+	return question
+}
+
+// FindOneCourse The Tool find one answer on question by filter, *option
+func (db *MongoDB) FindOneCourse(filter bson.D) storage.Course {
+	tableName, collectionName := tableDB, "course"
+	var course storage.Course
+
+	// Check correct collection and table name
+	if !slices.Contains(collectionDB, collectionName) {
+		return course
+	}
+	// Connect to mongoDB
+	client, err := mongo.Connect(context.TODO(), db.clientOpts)
+	defer db.closeConnection(client)
+	if err != nil {
+		db.log.Error("Connection with MongoDB is not created", err)
+	}
+
+	collection := client.Database(tableName).Collection(collectionName)
+	if err := collection.FindOne(context.TODO(), filter).Decode(&course); err != nil {
+		db.log.Error("Error with find one element in answerQuestion collection:", err)
+	}
+	return course
 }
