@@ -111,11 +111,74 @@ func (db *MongoDB) CreateDatabaseFeedback() {
 	}
 }
 
+// Еhe "Find" tool for searching by filter, *option and automatically writing to the structure type
+// [storage.Course, storage.Lecture, storage.Question storage.AnswerQuestion]
+// TODO: Edit log answer on err
+// TODO: Добавить фильтрацию по option
+
+// findAll tool for find all element in collection by filter and *option
+func (db *MongoDB) findAll(table, collection string, filter bson.D) []bson.M {
+	// Check correct name collection and table
+	if err := accessConnectToTableAndCollection(table, collection); err != nil {
+		db.log.Error("access is close, err:", err)
+		return []bson.M{}
+	}
+
+	// Connect to mongoDB
+	client, err := mongo.Connect(context.TODO(), db.clientOpts)
+	defer db.closeConnection(client)
+	if err != nil {
+		db.log.Error("Connection with MongoDB is not created", err)
+	}
+
+	// Create connect to collection
+	c := client.Database(table).Collection(collection)
+
+	// Create cursor in collection
+	cursor, err := c.Find(context.TODO(), filter)
+	if err != nil {
+		db.log.Error("[mongoDB][FindAll] Cursor not created")
+	}
+	defer db.closeCursor(cursor)
+
+	// Write result in []bson.M
+	var result []bson.M
+
+	if err = cursor.All(context.TODO(), &result); err != nil {
+		db.log.Error("Error with write cursor in result", err)
+	}
+
+	return result
+}
+
+// findOne tool for find one element in collection by filter and *option
+func (db *MongoDB) findOne(table, collection string, filter bson.D) bson.M {
+	// Check correct name collection and table
+	if err := accessConnectToTableAndCollection(table, collection); err != nil {
+		db.log.Error("access is close, err:", err)
+		return bson.M{}
+	}
+
+	// Connect to mongoDB
+	client, err := mongo.Connect(context.TODO(), db.clientOpts)
+	defer db.closeConnection(client)
+	if err != nil {
+		db.log.Error("Connection with MongoDB is not created", err)
+		return bson.M{}
+	}
+
+	// Create connect to collection
+	c := client.Database(table).Collection(collection)
+
+	// Write result in bson.M
+	var result bson.M
+
+	if err := c.FindOne(context.TODO(), filter).Decode(&result); err != nil {
+		db.log.Error("Error with find one element in answerQuestion collection:", err)
+	}
+	return result
+}
+
+// https://www.mongodb.com/docs/drivers/go/current/quick-start/ - Для вставки и
 // TODO: Method drop database
 // TODO: Расписать нужные методы
-
-// Скорее всего каждый раз нужно их в методах использовать
-// TODO: Create session to DB (Connect)
-// TODO: Close session to DB
-
-// TODO: Создать реализацию
