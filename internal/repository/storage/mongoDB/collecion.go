@@ -14,7 +14,7 @@ type ICollection interface {
 	FindAll(filter bson.D) []bson.M
 	FindOne(filter bson.D) bson.M
 	Create(item interface{}) primitive.ObjectID
-	Set(updateBson bson.D, id primitive.ObjectID)
+	Set(updateBson bson.D, filter bson.D)
 	Delete(filter bson.D)
 	Disconnect()
 }
@@ -101,8 +101,8 @@ func (c *Collection) Create(item interface{}) primitive.ObjectID {
 	return insertedID
 }
 
-func (c *Collection) Set(updateBson bson.D, id primitive.ObjectID) {
-	filter := bson.D{{"_id", id}}
+func (c *Collection) Set(updateBson bson.D, filter bson.D) {
+	//filter := bson.D{{"_id", id}}
 	// Creates instructions to add the "avg_rating" field to documents
 	update := bson.D{{"$set", updateBson}}
 	// Updates the first document that has the specified "_id" value
