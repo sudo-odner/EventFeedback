@@ -34,7 +34,7 @@ func (db *MongoDB) FindOneLecture(filter bson.D) storage.Lecture {
 	table, collection := tableDB, "lecture"
 	var lecture storage.Lecture
 
-	resultBson := db.findAll(table, collection, filter)
+	resultBson := db.findOne(table, collection, filter)
 	bsonBytes, _ := bson.Marshal(resultBson)
 	if err := bson.Unmarshal(bsonBytes, &lecture); err != nil {
 		db.log.Error("Can't read result")
