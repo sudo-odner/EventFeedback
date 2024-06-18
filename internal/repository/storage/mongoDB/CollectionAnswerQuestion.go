@@ -7,11 +7,19 @@ import (
 )
 
 // TODO
+// Ошибки + лог
+// Переделать тип выхода
 // FindAllAnswerQuestion() +
 // FindOneAnswerQuestion() +
 // CreateAnswerQuestion() +
 // SetAnswerQuestion()
 // DeleteAnswerQuestion() +
+
+// Какой то конвертор в эту ебень bson
+// Find(count: int, filter: узнать как делать) -> struct: [struct, ...], err: error
+// Create(item: struct) -> id: primitive.ObjectID, err: error
+// Delete(filter: узнать как делать) -> err: error
+// Set(item:struct, filter: узнать как делать)) -> err: error
 
 // FindOneAnswerQuestion The Tool find one answer on question by filter, *option
 func (db *MongoDB) FindOneAnswerQuestion(filter bson.D) storage.AnswerQuestion {
